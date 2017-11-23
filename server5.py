@@ -1,7 +1,7 @@
 import socket
 import vlc
 import threading
-host = '10.20.11.155'
+host = '192.168.1.126'
 port = 10000
 
 class Media_player():
