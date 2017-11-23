@@ -1,7 +1,10 @@
 import socket
 import vlc
 import threading
-host = '192.168.1.126'
+from os import listdir
+import os
+import sys
+host = '192.168.43.109'
 port = 10000
 
 class Media_player():
@@ -93,10 +96,13 @@ class Media_player():
         return
 
 def ClientThread(conn, addr, V):
-    msg_conn_true = "+Conectado al servidor exitosamente\n"
+    msg_conn_true = "F:\Bomba Estereo Elegancia tropical"
     conn.send(msg_conn_true.encode())
+    msg_recivido=conn.recv(1024).decode()
+    print(msg_recivido)
     msg_Estatus = V.GetEstado()
     conn.send(msg_Estatus.encode())
+    print(msg_Estatus)
     if msg_Estatus == "Falso":
         print('search path')
         msg_1 = "Iniciando media player, porfavor indique el directorio de repodruccion\n"

@@ -26,8 +26,9 @@ def main():
                 print(msg_conn_true)
 
                 msg_Estatus=mySocket.recv(1024).decode()
-
+                print('hola32')
                 if msg_Estatus == "Falso":
+                    print('hola')
                     path_1=Search_Path()
                     msg_1=mySocket.recv(1024).decode()
                     print(msg_1)
