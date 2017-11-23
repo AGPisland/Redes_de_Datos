@@ -1,7 +1,7 @@
 import socket
 import sys
 import easygui as eg
-host='localhost'
+host= '10.20.11.155'
 port=10000
 def Search_Path():
     path_player= eg.diropenbox(msg="open",
@@ -26,6 +26,7 @@ def main():
                 print(msg_conn_true)
 
                 msg_Estatus=mySocket.recv(1024).decode()
+
                 if msg_Estatus == "Falso":
                     path_1=Search_Path()
                     msg_1=mySocket.recv(1024).decode()
@@ -50,7 +51,12 @@ def main():
                 try:
                     data=mySocket.recv(1024).decode()
                     print(data)
-                    if op_input is 'salir':
+                    if op_input == "path":
+                        print('new path')
+                        path_1=Search_Path()
+                        mySocket.send(path_1.encode())
+                    if op_input == "salir":
+                        print('chao')
                         mySocket.close()
                         return
                 except:

@@ -1,19 +1,12 @@
 import socket
-import sys
-from _thread import *
 import vlc
-import os
-from os import listdir
 import threading
-import queue
-host = 'localhost'
+host = '10.20.11.155'
 port = 10000
 
-
-class Media_player(threading.Thread):
-    def __init__(self,queue):
+class Media_player():
+    def __init__(self):
         print('Ini object')
-        threading.Thread(target=self.Update(queue)).start()
         self.path_player = None
         self.lista = []
         self.filename = None
@@ -54,6 +47,7 @@ class Media_player(threading.Thread):
         self.Add_PlaybackVlc()
 
     def SetPath_player(self, new_path):
+        self.lista=[]
         self.path_player = new_path
         return self.path_player
 
@@ -77,17 +71,17 @@ class Media_player(threading.Thread):
     def Add_PlaybackVlc(self):
         if len(self.lista) == 0:
             return
-        self.filename = self.lista.pop()
-        if sys.version < '3':
-            self.filemane = unicode(filename)
-        self.media = self.instance.media_new(self.filename)
-        self.mediaplayer.set_media(self.media)
-        self.media.parse()
-        self.PlayPause()
-
-    def Update(self,queue):
-        if queue.full():
-            q=queue.get()
+        if self.mediaplayer.is_playing() :
+            
+        else:
+            self.filename = self.lista.pop()
+            self.media = self.instance.media_new(self.filename)
+            self.mediaplayer.set_media(self.media)
+            self.media.parse()
+            play=threading.Thread(self.PlayPause(), args=None)
+            play.start()
+    def Update(self):
+        pass
 
     def Volume(self, option):
         if option is 'max':
@@ -98,7 +92,7 @@ class Media_player(threading.Thread):
             self.mediaplayer.audio_set_volume(0)
         return
 
-def ClientThread(conn, addr, V,q):
+def ClientThread(conn, addr, V):
     msg_conn_true = "+Conectado al servidor exitosamente\n"
     conn.send(msg_conn_true.encode())
     msg_Estatus = V.GetEstado()
@@ -114,10 +108,10 @@ def ClientThread(conn, addr, V,q):
             except:
                 continue
         print(path_1)
-        q.put(V.SetPath_player(path_1))
-        q.put(V.Crear_lista())
-        q.put(V.Add_PlaybackVlc())
-        q.put(V.SetEstado(True))
+        V.SetPath_player(path_1)
+        V.Crear_lista()
+        V.Add_PlaybackVlc()
+        V.SetEstado(True)
         name = V.GetFileName()
         
     id_user = conn.recv(1024).decode()
@@ -141,34 +135,39 @@ def ClientThread(conn, addr, V,q):
                 print('en reproduccion:  ', name)
                 if log_op == 'play':
                     print('play')
-                    q.put(V.PlayPause())
+                    V.PlayPause()
                     conn.send(name.encode())
                 elif log_op == 'next':
                     print('next')
-                    q.put(V.Next())
+                    V.Next()
                     name = V.GetFileName()
                     print('NEXT: ', name)
                     conn.send(name.encode())
                 elif log_op == 'stop':
-                    q.put(V.stop())
+                    V.stop()
                     print('stop')
                     conn.send(name.encode())
                 elif log_op == 'path':
-                    pass
+                    V.stop()
+                    print('new path')
+                    path_1=None
+                    path_1 = conn.recv(1024).decode()
+                    print(path_1)
+                    V.SetPath_player(path_1)
+                    V.Crear_lista()
+                    V.Add_PlaybackVlc()
                     print('path')
                 elif log_op == 'mute':
                     print('mute')
-                    q.put(V.Volume('mute'))
+                    V.Volume('mute')
                     conn.send('MUTE'.encode())
                 elif log_op == 'max':
                     print('max')
-                    q.put(V.Volume('max'))
-                    
+                    V.Volume('max')
                     conn.send('VOLUMEN MAX'.encode())
                 elif log_op == 'min':
                     print('min')
-                    q.put(V.Volume('min'))
-                    
+                    V.Volume('min')
                     conn.send('VOLUMEN MIN'.encode())
                 elif log_op == 'salir':
                     conn.send("!Desconectado".encode())
@@ -183,8 +182,9 @@ def ClientThread(conn, addr, V,q):
     conn.close()
     return
 
-def main(q):
-    V = Media_player(q)
+def main():
+    V = Media_player()
+    #Play_h=threading.Thread(target=V.Update()).start()
     mySocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     mySocket.bind((host, port))
     mySocket.listen(2)
@@ -193,15 +193,16 @@ def main(q):
         try:
             conn, client_address = mySocket.accept()
             print('Cliente Nuevo', client_address)
-            Cliente=threading.Thread(target=ClientThread,args=(conn,client_address,V,q))
+            Cliente=threading.Thread(target=ClientThread,args=(conn,client_address,V))
             Cliente.daemon=True
             Cliente.start()
             Cliente.join()
+            Cliente.exit()
+            Cliente=None
         except:
             continue
     mySocket.close()
 
 
 if __name__ == '__main__':
-    q=queue.Queue()
-    main(q)
+    main()
