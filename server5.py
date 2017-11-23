@@ -72,7 +72,7 @@ class Media_player():
         if len(self.lista) == 0:
             return
         if self.mediaplayer.is_playing() :
-            
+            pass
         else:
             self.filename = self.lista.pop()
             self.media = self.instance.media_new(self.filename)
